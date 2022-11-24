@@ -1,0 +1,86 @@
+﻿@page
+@model IndexModel
+
+@if (Model.HasStarted)
+{
+	<nav class="navbar navbar-light bg-light">
+		<div class="container-fluid">
+			<span class="navbar-text">
+				@Model.Player?.Name
+			</span>
+			<form class="d-flex" asp-page-handler="Score" method="post">
+				<input name="score" class="form-control me-2" type="number" placeholder="Score" aria-label="Score">
+				<button class="btn btn-primary" type="submit">Submit</button>
+				@if (Model.Frame == 9 || Model.Chance?.Number == 0)
+				{
+					<button class="btn btn-success" asp-page-handler="Strike" type="submit">Strike</button>
+				}
+				else
+				{
+					<button class="btn btn-success" asp-page-handler="Spare" type="submit">Spare</button>
+				}
+			</form>
+		</div>
+	</nav>
+	<div class="row bg-light">
+		<div class="col"></div>
+		@for (var i = 1; i < Model.Frame + 1; i++)
+		{
+			<div class="col border-start border-end">@i</div>
+		}
+	</div>
+}
+
+@foreach (var player in Model.Players)
+{
+	<div class="row">
+		<div class="col bg-light border"><div class="py-3">@player.Name</div></div>
+		@if (Model.HasStarted)
+		{
+			@for (var i = 1; i < Model.Frame + 1; i++)
+			{
+				var chances = player.GetChances(i);
+				<div class="col">
+					<div class="row">
+						<div class="col-3"><div class="py-3"></div></div>
+						<div class="col-3 border">
+							@if (chances.Any())
+							{
+								<div class="py-3">@chances[0].Score</div>
+							}
+						</div>
+						<div class="col-3 border">
+							@if (chances.Count > 1)
+							{
+								<div class="py-3">@chances[1].Score</div>
+							}
+						</div>
+						@if (Model.Chance.IsFinalFrame) // && Strike or Spare
+						{
+							
+						}
+					</div>
+					<div class="row"><div class="col-12"><div class="py-3">@player.GetRunningScore(i)</div></div></div>
+				</div>
+			}
+		}
+	</div>
+}
+
+@if (!Model.HasStarted)
+{
+	<nav class="navbar">
+		<div class="container-fluid">
+			<form class="d-flex" asp-page-handler="Player" method="post">
+				<input name="name" class="form-control me-2" type="text" placeholder="Player Name" aria-label="Player Name">
+				<button class="btn btn-secondary" type="submit">Add</button>
+			</form>
+			@if (Model.Players.Count > 1)
+			{
+				<form class="d-flex" asp-page-handler="Start" method="post">
+					<button class="btn btn-primary" type="submit">Start</button>
+				</form>
+			}
+		</div>
+	</nav>
+}
