@@ -77,11 +77,11 @@ namespace SimpleBowling
 
 					if (chance.IsStrike)
 					{
-						score += chance.Next?.Score ?? 0 + chance.Next?.Next?.Score ?? 0;
+						return score + (chance.Next?.Score ?? 0) + (chance.Next?.Next?.Score ?? 0);
 					}
 					else if (chance.IsSpare)
 					{
-						score += chance.Next?.Score ?? 0;
+						return score + chance.Next?.Score ?? 0;
 					}
 				}
 			}
@@ -120,6 +120,23 @@ namespace SimpleBowling
 		public int PinsLeft => 10 - Score;
 		public bool CanGoAgain => Number < NumberOfChancesAllowed || !IsUsed;
 
+		public string FormattedScore
+		{
+			get
+			{
+				if (IsSpare)
+				{
+					return "/";
+				}
+				else if (Score == 10)
+				{
+					return "X";
+				}
+
+				return Score.ToString();
+			}
+		}
+
 		public int NumberOfChancesAllowed
 		{
 			get
@@ -154,6 +171,21 @@ namespace SimpleBowling
 				}
 
 				return false;
+			}
+		}
+
+		public bool CanStrike => IsFirst || (IsFinalFrame && Previous?.PinsLeft == 0);
+		public bool CanSpare => IsSecond && !(Previous?.IsStrike ?? true);
+
+		public Chance? Previous
+		{
+			get
+			{
+				if (Player is null) return null;
+
+				var chances = Player.GetChances();
+				var index = chances.IndexOf(this);
+				return chances.ElementAtOrDefault(index - 1);
 			}
 		}
 

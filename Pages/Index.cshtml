@@ -3,30 +3,33 @@
 
 @if (Model.HasStarted)
 {
-	<nav class="navbar navbar-light bg-light">
-		<div class="container-fluid">
-			<span class="navbar-text">
-				@Model.Player?.Name
-			</span>
-			<form class="d-flex" asp-page-handler="Score" method="post">
-				<input name="score" class="form-control me-2" type="number" placeholder="Score" aria-label="Score">
-				<button class="btn btn-primary" type="submit">Submit</button>
-				@if (Model.Frame == 9 || Model.Chance?.Number == 0)
-				{
-					<button class="btn btn-success" asp-page-handler="Strike" type="submit">Strike</button>
-				}
-				else
-				{
-					<button class="btn btn-success" asp-page-handler="Spare" type="submit">Spare</button>
-				}
-			</form>
-		</div>
-	</nav>
-	<div class="row bg-light">
-		<div class="col"></div>
+	@if (!Model.HasFinished)
+	{
+		<nav class="navbar">
+			<div class="container-fluid">
+				<h1 class="navbar-text">
+					@Model.Player?.Name
+				</h1>
+				<form class="d-flex" asp-page-handler="Score" method="post">
+					<input name="score" class="form-control me-2" type="number" placeholder="Score" aria-label="Score">
+					<button class="btn btn-primary" type="submit">Submit</button>
+					@if (Model.Chance?.CanStrike ?? false)
+					{
+						<button class="btn btn-success" asp-page-handler="Strike" type="submit">Strike</button>
+					}
+					else if (Model.Chance?.CanSpare ?? false)
+					{
+						<button class="btn btn-success" asp-page-handler="Spare" type="submit">Spare</button>
+					}
+				</form>
+			</div>
+		</nav>
+	}
+	<div class="row">
+		<div class="col border border-white"></div>
 		@for (var i = 1; i < Model.Frame + 1; i++)
 		{
-			<div class="col border-start border-end">@i</div>
+			<div class="col bg-light border fw-bold">@i</div>
 		}
 	</div>
 }
@@ -34,40 +37,55 @@
 @foreach (var player in Model.Players)
 {
 	<div class="row">
-		<div class="col bg-light border"><div class="py-3">@player.Name</div></div>
+		<div class="col bg-light border"><div class="py-3 fw-bold">@player.Name</div></div>
 		@if (Model.HasStarted)
 		{
 			@for (var i = 1; i < Model.Frame + 1; i++)
 			{
+				var colSize = i == 10 ? 3 : 4;
 				var chances = player.GetChances(i);
-				<div class="col">
+				<div class="col border">
 					<div class="row">
-						<div class="col-3"><div class="py-3"></div></div>
-						<div class="col-3 border">
-							@if (chances.Any())
+						<div class="col-@colSize"><div class="py-3"></div></div>
+						<div class="col-@colSize py-3 px-0 border border-top-0 border-end-0">
+							@if (chances.Any() && chances[0].IsUsed)
 							{
-								<div class="py-3">@chances[0].Score</div>
+								<div>@chances[0].FormattedScore</div>
 							}
 						</div>
-						<div class="col-3 border">
-							@if (chances.Count > 1)
+						<div class="col-@colSize py-3 px-0 border border-top-0 border-end-0">
+							@if (chances.Count > 1 && chances[1].IsUsed)
 							{
-								<div class="py-3">@chances[1].Score</div>
+								<div>@chances[1].FormattedScore</div>
 							}
 						</div>
-						@if (Model.Chance.IsFinalFrame) // && Strike or Spare
+						@if (i == 10)
 						{
-							
+							<div class="col-3 py-3 px-0 border border-top-0 border-end-0">
+								@if (chances.Count > 2 && chances[2].IsUsed)
+								{
+									<div>@chances[2].FormattedScore</div>
+								}
+							</div>
 						}
 					</div>
-					<div class="row"><div class="col-12"><div class="py-3">@player.GetRunningScore(i)</div></div></div>
+					<div class="row">
+						<div class="col-12">
+							<div class="py-3">
+								@if (chances.Any(c => c.IsUsed))
+								{
+									<span>@player.GetRunningScore(i)</span>
+								}
+							</div>
+						</div>
+					</div>
 				</div>
 			}
 		}
 	</div>
 }
 
-@if (!Model.HasStarted)
+@if (!Model.HasStarted && !Model.HasFinished)
 {
 	<nav class="navbar">
 		<div class="container-fluid">
